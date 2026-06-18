@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🎭 Random Persona Dashboard</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#0f0f1a;color:#e0e0e0;padding:20px}
+h1{font-size:24px;margin-bottom:20px;display:flex;align-items:center;gap:10px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit, minmax(380px, 1fr));gap:16px}
+.card{background:#1a1a2e;border:1px solid #2a2a4a;border-radius:12px;padding:18px}
+.card h2{font-size:16px;margin-bottom:12px;color:#8b8bf0;font-weight:600}
+.row{display:flex;justify-content:space-between;align-items:center;padding:4px 0}
+.label{color:#888;font-size:13px}
+.val{font-size:13px;font-weight:500}
+.bar{display:inline-block;height:10px;border-radius:5px;margin-right:6px;background:#3a3a5a;width:100px;overflow:hidden}
+.bar-fill{height:100%;border-radius:5px;transition:width .3s}
+.joy .bar-fill{background:linear-gradient(90deg,#f0a030,#f0d030)}
+.anger .bar-fill{background:linear-gradient(90deg,#e05040,#e08040)}
+.sad .bar-fill{background:linear-gradient(90deg,#5060c0,#6080d0)}
+.fear .bar-fill{background:linear-gradient(90deg,#9050c0,#a060d0)}
+.neutral .bar-fill{background:linear-gradient(90deg,#50a0b0,#60c0d0)}
+.prompt-box{background:#0d0d1a;border:1px solid #2a2a4a;border-radius:8px;padding:14px;font-family:monospace;font-size:12px;white-space:pre-wrap;max-height:300px;overflow-y:auto;line-height:1.4}
+.btn-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.btn{padding:8px 16px;border:1px solid #3a3a5a;border-radius:8px;background:#1a1a3e;color:#c0c0e0;cursor:pointer;font-size:13px;transition:all .2s}
+.btn:hover{background:#2a2a5e;border-color:#6a6af0}
+.btn.active{background:#3a3a7e;border-color:#8b8bf0}
+.btn.danger{color:#e05050;border-color:#803030}
+.btn.danger:hover{background:#402020}
+input,select{background:#0d0d1a;border:1px solid #3a3a5a;border-radius:6px;padding:8px 12px;color:#e0e0e0;font-size:13px;width:100%}
+input:focus,select:focus{outline:none;border-color:#6a6af0}
+.status-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px}
+.status-on{background:#40e040;box-shadow:0 0 6px #40e040}
+.status-off{background:#e04040}
+.tag{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;margin:2px;background:#2a2a4a}
+.section{margin-top:12px}
+.emoji{font-size:18px}
+#log{font-size:12px;color:#666;margin-top:8px}
+</style>
+</head>
+<body>
+
+<h1><span class="emoji">🎭</span> Random Persona Dashboard <span id="conn-status"></span></h1>
+
+<div class="grid">
+  <!-- STATE -->
+  <div class="card" id="state-card">
+    <h2>📊 当前状态</h2>
+    <div id="state-content">加载中...</div>
+  </div>
+
+  <!-- PROMPT -->
+  <div class="card">
+    <h2>📝 最新 Prompt 注入</h2>
+    <div class="prompt-box" id="prompt-box">—</div>
+    <div id="prompt-stats" style="font-size:12px;color:#666;margin-top:6px"></div>
+  </div>
+
+  <!-- COMMANDS -->
+  <div class="card">
+    <h2>⚡ 快速操作</h2>
+    <div style="margin-bottom:12px">
+      <label style="font-size:12px;color:#888">Session ID</label>
+      <input id="sid" value="dashboard" placeholder="session id">
+    </div>
+    <div style="margin-bottom:12px">
+      <label style="font-size:12px;color:#888">User ID</label>
+      <input id="uid" value="admin" placeholder="user id">
+    </div>
+    <div class="btn-row">
+      <button class="btn" onclick="cmd('random')">🎲 随机</button>
+      <button class="btn" onclick="cmd('chill')">🧊 Chill</button>
+      <button class="btn" onclick="cmd('warm')">☀️ Warm</button>
+      <button class="btn" onclick="cmd('talkative')">🗣️ 话多</button>
+      <button class="btn" onclick="cmd('quiet')">🤫 少说</button>
+      <button class="btn danger" onclick="cmd('reset')">🔄 重置</button>
+    </div>
+  </div>
+
+  <!-- INJECT TEST -->
+  <div class="card">
+    <h2>💬 模拟注入</h2>
+    <div style="margin-bottom:8px">
+      <label style="font-size:12px;color:#888">模拟用户消息</label>
+      <input id="test-msg" value="你好，今天天气真好！" placeholder="输入一段话测试情绪检测...">
+    </div>
+    <button class="btn" onclick="testInject()" style="width:100%">▶ 测试注入</button>
+    <div id="inject-result" style="margin-top:8px;font-size:12px;color:#888"></div>
+  </div>
+
+  <!-- LEXICON -->
+  <div class="card">
+    <h2>📚 词典查询</h2>
+    <div class="row" style="margin-bottom:8px">
+      <span class="label">Valence</span><span class="val"><input id="lex-v" value="0.7" style="width:70px;display:inline" type="number" step="0.1" min="0" max="1"></span>
+      <span class="label">Arousal</span><span class="val"><input id="lex-a" value="0.5" style="width:70px;display:inline" type="number" step="0.1" min="0" max="1"></span>
+      <span class="label">Domin.</span><span class="val"><input id="lex-d" value="0.6" style="width:70px;display:inline" type="number" step="0.1" min="0" max="1"></span>
+    </div>
+    <button class="btn" onclick="lexiconQuery()" style="width:100%">🔍 查询</button>
+    <div id="lexicon-result" style="margin-top:8px;font-size:12px"></div>
+  </div>
+
+  <!-- EMOTION -->
+  <div class="card">
+    <h2>⚡ 手动触发情绪</h2>
+    <select id="emo-select">
+      <option value="joy">😄 Joy</option><option value="anger">😡 Anger</option>
+      <option value="sadness">😢 Sadness</option><option value="fear">😨 Fear</option>
+      <option value="surprise">😲 Surprise</option><option value="disgust">🤢 Disgust</option>
+      <option value="trust">🤝 Trust</option><option value="anticipation">🔮 Anticipation</option>
+      <option value="gratitude">🙏 Gratitude</option><option value="guilt">😔 Guilt</option>
+      <option value="hurt">💔 Hurt</option>
+    </select>
+    <button class="btn" onclick="cmd('emotion', document.getElementById('emo-select').value)" style="width:100%;margin-top:8px">⚡ 触发情绪</button>
+  </div>
+</div>
+
+<div id="log"></div>
+
+<script>
+const API = 'http://127.0.0.1:4569';
+let lastPrompt = '';
+
+function log(msg) { document.getElementById('log').textContent = msg; }
+
+async function api(path, body={}) {
+  try {
+    const r = await fetch(`${API}${path}`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({session_id: sid(), user_id: uid(), ...body})
+    });
+    return await r.json();
+  } catch(e) { log('❌ API unreachable: ' + e.message); return {ok:false}; }
+}
+
+function sid() { return document.getElementById('sid').value || 'dashboard'; }
+function uid() { return document.getElementById('uid').value || 'admin'; }
+
+async function refresh() {
+  const r = await api('/api/status');
+  if (r.ok) {
+    document.getElementById('conn-status').innerHTML = '<span class="status-dot status-on"></span>已连接';
+    document.getElementById('state-content').innerHTML = renderState(r.data);
+  } else {
+    document.getElementById('conn-status').innerHTML = '<span class="status-dot status-off"></span>离线';
+  }
+}
+
+function renderState(data) {
+  if (!data) return '暂无数据';
+  // Parse the text-based status into HTML
+  return data.split('\n').map(line => {
+    if (line.startsWith('🎭') || line.startsWith('🌊') || line.startsWith('📊') || line.startsWith('⚡') || line.startsWith('👥') || line.startsWith('━━')) {
+      return `<div style="color:#8b8bf0;margin-top:6px;font-weight:600">${line}</div>`;
+    }
+    if (line.includes('█')) {
+      return `<div style="font-family:monospace;font-size:12px;margin:2px 0">${line}</div>`;
+    }
+    return `<div style="color:#aaa;font-size:12px">${line}</div>`;
+  }).join('');
+}
+
+async function cmd(c, args='') {
+  const r = await api('/api/command', {command: c, args});
+  log(r.ok ? `✅ ${r.data}` : '❌ Error');
+  setTimeout(refresh, 500);
+}
+
+async function testInject() {
+  const msg = document.getElementById('test-msg').value;
+  const r = await api('/api/inject', {user_message: msg});
+  if (r.ok) {
+    document.getElementById('prompt-box').textContent = r.data;
+    document.getElementById('prompt-stats').textContent = `${r.data.length} chars | ~${Math.round(r.data.length/3)} tokens`;
+    lastPrompt = r.data;
+  }
+  setTimeout(refresh, 300);
+}
+
+async function lexiconQuery() {
+  const v = parseFloat(document.getElementById('lex-v').value);
+  const a = parseFloat(document.getElementById('lex-a').value);
+  const d = parseFloat(document.getElementById('lex-d').value);
+  // Simple client-side PAD search by doing an inject and reading the words
+  const r = await api('/api/inject', {user_message: ''});
+  if (r.ok && r.data) {
+    const match = r.data.match(/倾向用词: (.+)/);
+    if (match) {
+      document.getElementById('lexicon-result').innerHTML = 
+        `<div style="color:#f0a030">PAD(${v},${a},${d}) →</div>
+         <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:4px">
+           ${match[1].split('、').map(w => `<span class="tag">${w}</span>`).join('')}
+         </div>
+         <div style="margin-top:4px;color:#666;font-size:11px">(词库查询通过 /api/inject 间接完成)</div>`;
+    }
+  }
+}
+
+// Auto-refresh
+refresh();
+setInterval(refresh, 10000);
+</script>
+</body>
+</html>

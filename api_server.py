@@ -46,6 +46,19 @@ class Handler(BaseHTTPRequestHandler):
             return json.loads(self.rfile.read(length))
         return {}
 
+    def do_GET(self):
+        if self.path in ("/", "/dashboard"):
+            import os as _os
+            html_path = _os.path.join(_os.path.dirname(__file__), "dashboard.html")
+            if _os.path.exists(html_path):
+                self.send_response(200)
+                self.send_header("Content-Type", "text/html; charset=utf-8")
+                self.end_headers()
+                with open(html_path, "rb") as f:
+                    self.wfile.write(f.read())
+                return
+        self.send_error(404)
+
     def do_POST(self):
         try:
             body = self._parse()
