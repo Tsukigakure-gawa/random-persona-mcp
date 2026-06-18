@@ -377,7 +377,7 @@ class StateManager:
         if dt_hours <= 0:
             return
 
-        for dim, key in [("valence", "v"), ("arousal", "a"), ("dominance", "d")]:
+        for dim, key in [("valence", "valence"), ("arousal", "arousal"), ("dominance", "dominance")]:
             mu = baseline[dim]
             x = getattr(mood, key)
             drift = THETA_DEFAULT * (mu - x) * dt_hours
@@ -501,7 +501,7 @@ class StateManager:
     def set_mood(self, session_id: str, **kwargs: Any) -> SessionState:
         state = self.get_or_init(session_id)
         for k, v in kwargs.items():
-            key = {"valence": "v", "arousal": "a", "dominance": "d"}.get(k, k)
+            key = {"valence": "valence", "arousal": "arousal", "dominance": "dominance"}.get(k, k)
             if hasattr(state.mood, key):
                 setattr(state.mood, key, _c(float(v)))
         state.mood.updated_at = time.time()

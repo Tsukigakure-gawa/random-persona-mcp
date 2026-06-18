@@ -10,7 +10,7 @@ from __future__ import annotations
 import re
 from typing import Any
 
-from .state import (
+from state import (
     JOY, SADNESS, ANGER, FEAR, SURPRISE, DISGUST,
     TRUST, ANTICIPATION, GUILT, GRATITUDE, HURT,
 )

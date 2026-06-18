@@ -10,7 +10,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Optional
 
-from .lexicon import EmotionLexicon
+from lexicon import EmotionLexicon
 
 # ---- LanguageProfile -----------------------------------------------
 

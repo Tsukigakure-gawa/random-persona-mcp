@@ -1,1 +1,4 @@
-__pycache__/\ndata/\n*.pyc
+__pycache__/
+data/
+*.pyc
+lexicon/__pycache__/

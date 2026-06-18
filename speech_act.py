@@ -149,7 +149,7 @@ def _get_basket(emotion_label: str | None, regulation: str | None) -> str:
     if emotion_label is None:
         return "neutral"
 
-    from .state import JOY, ANGER, SADNESS, FEAR, SURPRISE, DISGUST, GRATITUDE, HURT, GUILT, ANTICIPATION, TRUST
+    from state import JOY, ANGER, SADNESS, FEAR, SURPRISE, DISGUST, GRATITUDE, HURT, GUILT, ANTICIPATION, TRUST
 
     if emotion_label == JOY:
         basket = "joy_moderate" if regulation == "moderate" else "joy_share"
